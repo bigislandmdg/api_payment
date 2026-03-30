@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Voaray - Paiement Mobile Money</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 450px;
+            width: 100%;
+            padding: 32px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .amount-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .amount-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .amount {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .method-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .method-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            transform: scale(1.02);
+        }
+
+        .method-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .method-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .method-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .timer {
+            text-align: center;
+            color: #ff6b6b;
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 12px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container" id="paymentContainer">
+        <div class="header">
+            <div class="logo">💳</div>
+            <h1>Voaray Payment</h1>
+            <p class="subtitle">Paiement sécurisé par Mobile Money</p>
+        </div>
+
+        <div class="amount-card">
+            <div class="amount-label">Montant à payer</div>
+            <div class="amount" id="amount">0 Ar</div>
+        </div>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label>📱 Numéro de téléphone</label>
+                <input type="tel" id="phone" placeholder="034 12 345 67" required>
+            </div>
+
+            <label>💰 Choisissez votre opérateur</label>
+            <div class="payment-methods">
+                <div class="method-card" data-method="MVOLA">
+                    <div class="method-icon">📱</div>
+                    <div class="method-name">MVola</div>
+                </div>
+                <div class="method-card" data-method="ORANGE">
+                    <div class="method-icon">🟠</div>
+                    <div class="method-name">Orange Money</div>
+                </div>
+                <div class="method-card" data-method="AIRTEL">
+                    <div class="method-icon">🔴</div>
+                    <div class="method-name">Airtel Money</div>
+                </div>
+            </div>
+
+            <input type="hidden" id="method" value="MVOLA">
+            <input type="hidden" id="paymentId" value="">
+            <input type="hidden" id="orderId" value="">
+            <input type="hidden" id="amountValue" value="">
+
+            <button type="submit" id="submitBtn">
+                <span id="btnText">Confirmer le paiement</span>
+            </button>
+        </form>
+
+        <div class="timer" id="timer">⏱️ Temps restant: 05:00</div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p>📲 Confirmez la transaction sur votre téléphone...</p>
+            <p style="font-size: 12px; margin-top: 8px;">Vous recevrez une notification</p>
+        </div>
+
+        <div class="message" id="message"></div>
+        <div class="info-text">🔒 Transaction sécurisée par Voaray</div>
+    </div>
+
+    <script>
+        // Variables globales
+        let countdown = 300;
+        let timerInterval;
+        let pollInterval;
+
+        // Récupérer les paramètres URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order_id');
+        const amount = urlParams.get('amount');
+        const paymentIdFromUrl = urlParams.get('payment_id');
+
+        // Initialiser les champs
+        if (amount) {
+            document.getElementById('amount').textContent = `${parseInt(amount).toLocaleString()} Ar`;
+            document.getElementById('amountValue').value = amount;
+        }
+
+        if (orderId) {
+            document.getElementById('orderId').value = orderId;
+        }
+
+        if (paymentIdFromUrl) {
+            document.getElementById('paymentId').value = paymentIdFromUrl;
+            document.getElementById('paymentId').value = paymentIdFromUrl;
+            startPolling(paymentIdFromUrl);
+        }
+
+        // Sélection de la méthode de paiement
+        document.querySelectorAll('.method-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.method-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                document.getElementById('method').value = card.dataset.method;
+            });
+        });
+
+        // Sélectionner la première méthode par défaut
+        if (document.querySelector('.method-card')) {
+            document.querySelector('.method-card').classList.add('selected');
+        }
+
+        // Timer
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                if (countdown <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timer').innerHTML = '⏰ Session expirée';
+                    document.getElementById('submitBtn').disabled = true;
+                    showMessage('La session a expiré. Veuillez recommencer.', 'error');
+                } else {
+                    countdown--;
+                    const minutes = Math.floor(countdown / 60);
+                    const seconds = countdown % 60;
+                    document.getElementById('timer').innerHTML = `⏱️ Temps restant: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        startTimer();
+
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = msg;
+            messageDiv.className = `message ${type}`;
+            setTimeout(() => {
+                messageDiv.className = 'message';
+            }, 5000);
+        }
+
+        function generateSignature(data) {
+            const timestamp = Date.now().toString();
+            const payload = JSON.stringify(data);
+            const secret = '{{SECRET_KEY}}';
+            
+            // Simuler une signature pour le développement
+            // En production, cela devrait être fait côté serveur
+            return btoa(timestamp + ':' + payload);
+        }
+
+        async function createPayment(paymentData) {
+            const response = await fetch('/api/payments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Timestamp': Date.now().toString(),
+                    'X-Signature': generateSignature(paymentData)
+                },
+                body: JSON.stringify(paymentData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erreur lors de la création du paiement');
+            }
+
+            return await response.json();
+        }
+
+        async function getPaymentStatus(paymentId) {
+            const response = await fetch(`/api/payments/${paymentId}`);
+            if (!response.ok) return null;
+            return await response.json();
+        }
+
+        function startPolling(paymentId) {
+            if (pollInterval) clearInterval(pollInterval);
+            
+            let attempts = 0;
+            const maxAttempts = 30;
+
+            pollInterval = setInterval(async () => {
+                attempts++;
+                
+                try {
+                    const payment = await getPaymentStatus(paymentId);
+                    
+                    if (payment && payment.success) {
+                        if (payment.status === 'SUCCESS') {
+                            clearInterval(pollInterval);
+                            clearInterval(timerInterval);
+                            showMessage('✅ Paiement confirmé ! Redirection...', 'success');
+                            setTimeout(() => {
+                                window.location.href = `/payment-success.html?order_id=${payment.order_id}`;
+                            }, 2000);
+                        } else if (payment.status === 'FAILED' || payment.status === 'EXPIRED') {
+                            clearInterval(pollInterval);
+                            showMessage('❌ Le paiement a échoué. Veuillez réessayer.', 'error');
+                            document.getElementById('submitBtn').disabled = false;
+                            document.getElementById('loader').classList.remove('active');
+                            document.getElementById('btnText').textContent = 'Réessayer';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du polling:', error);
+                }
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    showMessage('⏰ Délai d\'attente dépassé. Vérifiez le statut plus tard.', 'info');
+                    document.getElementById('submitBtn').disabled = false;
+                    document.getElementById('loader').classList.remove('active');
+                }
+            }, 3000);
+        }
+
+        // Soumission du formulaire
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const phone = document.getElementById('phone').value.replace(/\s/g, '');
+            const method = document.getElementById('method').value;
+            const amount = document.getElementById('amountValue').value;
+            const orderId = document.getElementById('orderId').value;
+
+            if (!phone || !method) {
+                showMessage('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            // Validation du numéro de téléphone (10 chiffres)
+            if (!/^[0-9]{10}$/.test(phone)) {
+                showMessage('Numéro de téléphone invalide (10 chiffres requis)', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loader = document.getElementById('loader');
+            const btnText = document.getElementById('btnText');
+            
+            submitBtn.disabled = true;
+            loader.classList.add('active');
+            btnText.textContent = 'Traitement en cours...';
+
+            try {
+                let paymentId = document.getElementById('paymentId').value;
+                
+                if (!paymentId) {
+                    const paymentData = {
+                        amount: parseFloat(amount),
+                        order_id: orderId,
+                        phone: phone,
+                        method: method,
+                        return_url: window.location.origin + '/payment-success.html'
+                    };
+
+                    const result = await createPayment(paymentData);
+                    
+                    if (result.success && result.payment_id) {
+                        paymentId = result.payment_id;
+                        document.getElementById('paymentId').value = paymentId;
+                        startPolling(paymentId);
+                        showMessage('📲 Paiement initié. Confirmez sur votre téléphone.', 'success');
+                    } else {
+                        throw new Error(result.error || 'Erreur lors de la création du paiement');
+                    }
+                } else {
+                    startPolling(paymentId);
+                    showMessage('📲 Confirmez la transaction sur votre téléphone.', 'info');
+                }
+                
+                btnText.textContent = 'En attente de confirmation...';
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage(error.message || 'Une erreur est survenue', 'error');
+                submitBtn.disabled = false;
+                loader.classList.remove('active');
+                btnText.textContent = 'Confirmer le paiement';
+            }
+        });
+    </script>
+</body>
+</html>

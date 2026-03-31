@@ -8,17 +8,36 @@ export const handleMobileMoneyWebhook = async (req: Request, res: Response) => {
   try {
     const { transaction_id, status, payment_id, amount, phone } = req.body;
 
-    await prisma.webhookLog.create({
-      data: {
-        paymentId: payment_id,
-        event: 'PAYMENT_CONFIRMED',
-        source: 'mobile_money',
-        payload: req.body,
-        statusCode: 200,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
-      }
-    });
+    // Vérifier si le payment existe avant de créer le log
+    let existingPayment = null;
+    if (payment_id) {
+      existingPayment = await prisma.payment.findFirst({
+        where: {
+          OR: [
+            { id: payment_id },
+            { transactionId: transaction_id },
+            { reference: payment_id }
+          ]
+        }
+      });
+    }
+
+    // Créer le log seulement si le paiement existe
+    if (existingPayment) {
+      await prisma.webhookLog.create({
+        data: {
+          paymentId: existingPayment.id,
+          event: 'PAYMENT_CONFIRMED',
+          source: 'mobile_money',
+          payload: req.body,
+          statusCode: 200,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent']
+        }
+      });
+    } else {
+      logger.warn(`Webhook received for unknown payment: ${payment_id}`);
+    }
 
     const payment = await prisma.payment.findFirst({
       where: {
@@ -90,17 +109,50 @@ export const handleShopifyWebhook = async (req: Request, res: Response) => {
 
     logger.info(`Shopify webhook received: ${topic} for order ${id}`);
 
-    await prisma.webhookLog.create({
-      data: {
-        paymentId: id?.toString(),
-        event: topic === 'orders/create' ? 'SHOPIFY_ORDER_CREATED' : 'SHOPIFY_ORDER_PAID',
-        source: 'shopify',
-        payload: req.body,
-        statusCode: 200,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent']
+    // Vérifier si un paiement existe pour cette commande
+    let existingPayment = null;
+    if (id) {
+      existingPayment = await prisma.payment.findUnique({
+        where: { orderId: id.toString() }
+      });
+    }
+
+    // Créer le log seulement si un paiement existe
+    // Sinon, on log juste dans le fichier sans enregistrer en base
+    if (existingPayment) {
+      await prisma.webhookLog.create({
+        data: {
+          paymentId: existingPayment.id,
+          event: topic === 'orders/create' ? 'SHOPIFY_ORDER_CREATED' : 'SHOPIFY_ORDER_PAID',
+          source: 'shopify',
+          payload: req.body,
+          statusCode: 200,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent']
+        }
+      });
+    } else {
+      // Logger dans un fichier séparé pour les webhooks sans paiement associé
+      const fs = require('fs');
+      const logDir = 'logs';
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir);
       }
-    });
+      
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        topic,
+        orderId: id,
+        data: req.body
+      };
+      
+      fs.appendFileSync(
+        'logs/shopify-webhooks.log', 
+        JSON.stringify(logEntry) + '\n'
+      );
+      
+      logger.info(`Shopify webhook logged to file for order ${id} (no payment associated)`);
+    }
 
     res.json({ success: true });
   } catch (error) {

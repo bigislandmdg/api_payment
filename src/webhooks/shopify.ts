@@ -4,6 +4,12 @@ import logger from '../utils/logger';
 import prisma from '../config/database';
 
 export const verifyShopifyWebhook = (req: Request, res: Response, next: NextFunction) => {
+  // Désactiver la vérification en développement
+  if (process.env.NODE_ENV === 'development') {
+    console.log('⚠️ [DEV MODE] Shopify webhook signature verification disabled');
+    return next();
+  }
+
   const hmac = req.headers['x-shopify-hmac-sha256'] as string;
   const secret = process.env.SHOPIFY_API_SECRET;
   
@@ -35,11 +41,11 @@ export const handleOrderCreate = async (req: Request, res: Response) => {
   try {
     const order = req.body;
     
-    logger.info(`New order created: ${order.id} - Total: ${order.total_price}`);
+    logger.info(`📦 New order created: ${order.id} - Total: ${order.total_price}`);
     
     await prisma.webhookLog.create({
       data: {
-        paymentId: order.id.toString(),
+        paymentId: order.id?.toString(),
         event: 'SHOPIFY_ORDER_CREATED',
         source: 'shopify',
         payload: order,
@@ -63,11 +69,11 @@ export const handleOrderPaid = async (req: Request, res: Response) => {
   try {
     const order = req.body;
     
-    logger.info(`Order paid: ${order.id} - Financial status: ${order.financial_status}`);
+    logger.info(`💰 Order paid: ${order.id} - Financial status: ${order.financial_status}`);
     
     await prisma.webhookLog.create({
       data: {
-        paymentId: order.id.toString(),
+        paymentId: order.id?.toString(),
         event: 'SHOPIFY_ORDER_PAID',
         source: 'shopify',
         payload: order,
@@ -91,11 +97,11 @@ export const handleOrderCancelled = async (req: Request, res: Response) => {
   try {
     const order = req.body;
     
-    logger.info(`Order cancelled: ${order.id}`);
+    logger.info(`❌ Order cancelled: ${order.id}`);
     
     await prisma.webhookLog.create({
       data: {
-        paymentId: order.id.toString(),
+        paymentId: order.id?.toString(),
         event: 'SHOPIFY_ORDER_CANCELLED',
         source: 'shopify',
         payload: order,
@@ -119,7 +125,7 @@ export const handleOrderRefund = async (req: Request, res: Response) => {
   try {
     const refund = req.body;
     
-    logger.info(`Order refunded: ${refund.order_id} - Amount: ${refund.amount}`);
+    logger.info(`🔄 Order refunded: ${refund.order_id} - Amount: ${refund.amount}`);
     
     await prisma.webhookLog.create({
       data: {

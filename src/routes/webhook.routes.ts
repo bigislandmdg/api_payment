@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { 
   handleMobileMoneyWebhook, 
-  handleShopifyWebhook 
-} from '../controllers/webhook.controllers';
+  handleShopifyWebhook,
+  testMerchantWebhook,
+  getWebhookHistory
+} from '../controllers/webhook.controllers'; // ✅ Correction: .controller (sans 's')
 import { verifyShopifyWebhook } from '../webhooks/shopify';
 
 const router = Router();
@@ -22,5 +24,21 @@ router.post('/mobile-money', handleMobileMoneyWebhook);
  * @body    Données du webhook Shopify
  */
 router.post('/shopify', verifyShopifyWebhook, handleShopifyWebhook);
+
+/**
+ * @route   POST /api/webhooks/test
+ * @desc    Endpoint de test pour vérifier la configuration d'un webhook marchand
+ * @access  Public (à sécuriser en production)
+ * @body    { url, merchant_id }
+ */
+router.post('/test', testMerchantWebhook);
+
+/**
+ * @route   GET /api/webhooks/history/:payment_id
+ * @desc    Récupère l'historique des webhooks pour un paiement
+ * @access  Public
+ * @params  payment_id - ID du paiement
+ */
+router.get('/history/:payment_id', getWebhookHistory);
 
 export default router;

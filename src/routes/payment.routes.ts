@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { 
   createPayment, 
   getPaymentStatus, 
-  confirmPayment 
-} from '../controllers/payment.controllers';
+  confirmPayment,
+  getAllPayments
+} from '../controllers/payment.controllers'; // ✅ Correction: .controller (sans 's')
 import { verifySignature } from '../middleware/auth';
 import { validatePaymentRequest, validateConfirmPayment } from '../middleware/validation';
 import rateLimit from 'express-rate-limit';
@@ -13,7 +14,7 @@ const router = Router();
 // Rate limiting spécifique pour les créations de paiement
 const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10000, // 10 requêtes par IP
+  max: 10000, // 10000 requêtes par IP
   message: {
     success: false,
     error: 'Too many payment requests from this IP',
@@ -34,6 +35,19 @@ const confirmLimiter = rateLimit({
   }
 });
 
+// Rate limiting pour la liste des paiements
+const listLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 requêtes par minute
+  message: {
+    success: false,
+    error: 'Too many requests',
+    code: 'RATE_LIMITED'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * @route   POST /api/payments
  * @desc    Créer un nouveau paiement
@@ -45,6 +59,18 @@ router.post('/',
   verifySignature, 
   validatePaymentRequest, 
   createPayment
+);
+
+/**
+ * @route   GET /api/payments
+ * @desc    Récupérer la liste de tous les paiements (paginée)
+ * @access  Public
+ * @query   page - Numéro de page (défaut: 1)
+ * @query   limit - Nombre d'éléments par page (défaut: 50, max: 100)
+ */
+router.get('/', 
+  listLimiter,
+  getAllPayments
 );
 
 /**

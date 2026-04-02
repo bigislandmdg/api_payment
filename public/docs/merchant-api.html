@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voaray API Documentation - Marchands</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-header h2 {
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+
+        .card-header p {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+
+        .method-post { background: #28a745; color: white; }
+        .method-get { background: #17a2b8; color: white; }
+        .method-put { background: #ffc107; color: #1a1a2e; }
+        .method-delete { background: #dc3545; color: white; }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            color: #495057;
+        }
+
+        .endpoint-description {
+            margin-top: 10px;
+            color: #6c757d;
+        }
+
+        pre {
+            background: #1e1e2e;
+            color: #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 15px 0;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #e83e8c;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .param-table th, .param-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .param-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-required { background: #dc3545; color: white; }
+        .badge-optional { background: #6c757d; color: white; }
+
+        .sidebar {
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar-nav {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-nav h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-nav a {
+            color: #495057;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .sidebar-nav a:hover {
+            color: #667eea;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+        }
+
+        @media (min-width: 768px) {
+            .two-columns {
+                display: flex;
+                gap: 30px;
+            }
+            .sidebar {
+                width: 280px;
+                flex-shrink: 0;
+            }
+            .content {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Voaray Merchant API</h1>
+        <p>Documentation complète de l'API pour les marchands</p>
+        <p><strong>Base URL:</strong> <code id="baseUrl">http://localhost:5000/api/merchants</code></p>
+    </div>
+
+    <div class="container">
+        <div class="two-columns">
+            <div class="sidebar">
+                <div class="sidebar-nav">
+                    <h3>📚 Sommaire</h3>
+                    <ul>
+                        <li><a href="#introduction">Introduction</a></li>
+                        <li><a href="#authentication">Authentification</a></li>
+                        <li><a href="#register">Créer un compte</a></li>
+                        <li><a href="#info">Informations marchand</a></li>
+                        <li><a href="#stats">Statistiques</a></li>
+                        <li><a href="#update">Mettre à jour</a></li>
+                        <li><a href="#transactions">Transactions</a></li>
+                        <li><a href="#regenerate">Régénérer clé API</a></li>
+                        <li><a href="#errors">Codes d'erreur</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Introduction -->
+                <div class="card" id="introduction">
+                    <div class="card-header">
+                        <h2>📖 Introduction</h2>
+                        <p>Bienvenue sur l'API Voaray pour marchands</p>
+                    </div>
+                    <div class="card-body">
+                        <p>L'API Voaray permet aux marchands d'intégrer facilement les paiements Mobile Money (MVola, Orange Money, Airtel Money) dans leurs applications et sites e-commerce.</p>
+                        <br>
+                        <p><strong>Caractéristiques :</strong></p>
+                        <ul>
+                            <li>✅ Intégration simple via clé API</li>
+                            <li>✅ Paiements sécurisés avec signature HMAC</li>
+                            <li>✅ Webhooks pour notifications en temps réel</li>
+                            <li>✅ Dashboard de statistiques</li>
+                            <li>✅ Support multi-opérateurs (MVola, Orange, Airtel)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Authentification -->
+                <div class="card" id="authentication">
+                    <div class="card-header">
+                        <h2>🔐 Authentification</h2>
+                        <p>Comment authentifier vos requêtes API</p>
+                    </div>
+                    <div class="card-body">
+                        <p>Pour accéder aux endpoints protégés, vous devez inclure vos identifiants API dans les headers de la requête :</p>
+                        <pre><code>X-API-Key: votre_api_key
+X-API-Secret: votre_api_secret</code></pre>
+                        <p>Ces identifiants vous sont fournis lors de la création de votre compte marchand.</p>
+                        <div class="endpoint">
+                            <p><strong>⚠️ Important :</strong> Ne partagez jamais votre clé API et votre secret. Stockez-les de manière sécurisée.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Créer un compte -->
+                <div class="card" id="register">
+                    <div class="card-header">
+                        <h2>📝 Créer un compte marchand</h2>
+                        <p>Inscription d'un nouveau marchand</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="endpoint">
+                            <span class="endpoint-method method-post">POST</span>
+                            <span class="endpoint-url">/api/merchants/register</span>
+                            <div class="endpoint-description">Crée un nouveau compte marchand et génère les clés API</div>
+                        </div>
+
+                        <h4>Paramètres de la requête</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr>
+                                    <th>Champ</th>
+                                    <th>Type</th>
+                                    <th>Requis</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>name</td><td>string</td><td><span class="badge badge-required">Requis</span></td><td>Nom du marchand</td></tr>
+                                <tr><td>email</td><td>string</td><td><span class="badge badge-required">Requis</span></td><td>Email du marchand (unique)</td></tr>
+                                <tr><td>company</td><td>string</td><td><span class="badge badge-optional">Optionnel</span></td><td>Nom de l'entreprise</td></tr>
+                                <tr><td>plan</td><td>string</td><td><span class="badge badge-optional">Optionnel</span></td><td>Plan (BASIC, PRO, ENTERPRISE) - défaut: BASIC</td></tr>
+                                <tr><td>phone</td><td>string</td><td><span class="badge badge-optional">Optionnel</span></td><td>Numéro de téléphone</td></tr>
+                                <tr><td>webhookUrl</td><td>string</td><td><span class="badge badge-optional">Optionnel</span></td><td>URL de webhook pour les notifications</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Exemple de requête</h4>
+                        <pre><code>curl -X POST http://localhost:5000/api/merchants/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Mon E-commerce",
+    "email": "contact@ecom.mg",
+    "company": "Ecom MG SARL",
+    "plan": "PRO",
+    "phone": "0341234567",
+    "webhookUrl": "https://ecom.mg/webhook"
+  }'</code></pre>
+
+                        <h4>Réponse succès (200)</h4>
+                        <pre><code>{
+  "success": true,
+  "data": {
+    "merchantId": "merch_123456",
+    "name": "Mon E-commerce",
+    "email": "contact@ecom.mg",
+    "companyName": "Ecom MG SARL",
+    "plan": "PRO",
+    "apiKey": "voaray_abc123def456...",
+    "apiSecret": "sec_789ghi012jkl...",
+    "endpoints": {
+      "createPayment": "http://localhost:5000/api/v1/payments",
+      "getStatus": "http://localhost:5000/api/v1/payments/:id",
+      "confirmPayment": "http://localhost:5000/api/v1/payments/confirm",
+      "webhookUrl": "http://localhost:5000/api/webhooks/merchant"
+    }
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Informations marchand -->
+                <div class="card" id="info">
+                    <div class="card-header">
+                        <h2>👤 Informations marchand</h2>
+                        <p>Récupérer les informations du compte</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="endpoint">
+                            <span class="endpoint-method method-get">GET</span>
+                            <span class="endpoint-url">/api/merchants/info</span>
+                            <div class="endpoint-description">Retourne les informations détaillées du marchand</div>
+                        </div>
+
+                        <h4>Exemple de requête</h4>
+                        <pre><code>curl -X GET http://localhost:5000/api/merchants/info \
+  -H "X-API-Key: voaray_abc123..." \
+  -H "X-API-Secret: sec_789ghi..."</code></pre>
+
+                        <h4>Réponse succès (200)</h4>
+                        <pre><code>{
+  "success": true,
+  "data": {
+    "id": "merch_123456",
+    "name": "Mon E-commerce",
+    "email": "contact@ecom.mg",
+    "phone": "0341234567",
+    "companyName": "Ecom MG SARL",
+    "settings": {"plan": "PRO"},
+    "webhookUrl": "https://ecom.mg/webhook",
+    "active": true,
+    "apiKeys": [...],
+    "createdAt": "2024-01-15T10:00:00Z"
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Statistiques -->
+                <div class="card" id="stats">
+                    <div class="card-header">
+                        <h2>📊 Statistiques</h2>
+                        <p>Consulter les statistiques de transactions</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="endpoint">
+                            <span class="endpoint-method method-get">GET</span>
+                            <span class="endpoint-url">/api/merchants/stats</span>
+                            <div class="endpoint-description">Retourne les statistiques des 30 derniers jours</div>
+                        </div>
+
+                        <h4>Paramètres optionnels</h4>
+                        <table class="param-table">
+                            <thead>
+                                <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>period</td><td>string</td><td>day, week, month, year (défaut: month)</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Exemple de requête</h4>
+                        <pre><code>curl -X GET http://localhost:5000/api/merchants/stats?period=month \
+  -H "X-API-Key: voaray_abc123..." \
+  -H "X-API-Secret: sec_789ghi..."</code></pre>
+
+                        <h4>Réponse succès (200)</h4>
+                        <pre><code>{
+  "success": true,
+  "data": {
+    "merchant": {
+      "id": "merch_123456",
+      "name": "Mon E-commerce",
+      "plan": "PRO"
+    },
+    "summary": {
+      "total_transactions": 150,
+      "total_volume": 3750000,
+      "total_fees": 56250,
+      "net_volume": 3693750,
+      "success_rate": "96.00%",
+      "average_transaction": 25000
+    },
+    "by_method": [
+      {"method": "MVOLA", "count": 80, "volume": 2000000, "fees": 30000},
+      {"method": "ORANGE", "count": 50, "volume": 1250000, "fees": 18750},
+      {"method": "AIRTEL", "count": 20, "volume": 500000, "fees": 7500}
+    ]
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Mettre à jour -->
+                <div class="card" id="update">
+                    <div class="card-header">
+                        <h2>✏️ Mettre à jour</h2>
+                        <p>Modifier les informations du marchand</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="endpoint">
+                            <span class="endpoint-method method-put">PUT</span>
+                            <span class="endpoint-url">/api/merchants/update</span>
+                            <div class="endpoint-description">Met à jour les informations du marchand</div>
+                        </div>
+
+                        <h4>Paramètres de la requête</h4>
+                        <table class="param-table">
+                            <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td>name</td><td>string</td><td>Nom du marchand</td></tr>
+                                <tr><td>phone</td><td>string</td><td>Numéro de téléphone</td></tr>
+                                <tr><td>companyName</td><td>string</td><td>Nom de l'entreprise</td></tr>
+                                <tr><td>webhookUrl</td><td>string</td><td>URL de webhook</td></tr>
+                                <tr><td>settings</td><td>object</td><td>Configuration (plan, etc.)</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Exemple de requête</h4>
+                        <pre><code>curl -X PUT http://localhost:5000/api/merchants/update \
+  -H "X-API-Key: voaray_abc123..." \
+  -H "X-API-Secret: sec_789ghi..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Nouveau Nom",
+    "phone": "0349876543",
+    "webhookUrl": "https://new-webhook.com"
+  }'</code></pre>
+                    </div>
+                </div>
+
+                <!-- Transactions -->
+                <div class="card" id="transactions">
+                    <div class="card-header">
+                        <h2>📋 Transactions</h2>
+                        <p>Liste des transactions du marchand</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="endpoint">
+                            <span class="endpoint-method method-get">GET</span>
+                            <span class="endpoint-url">/api/merchants/transactions</span>
+                            <div class="endpoint-description">Retourne la liste paginée des transactions</div>
+                        </div>
+
+                        <h4>Paramètres de requête</h4>
+                        <table class="param-table">
+                            <thead><tr><th>Champ</th><th>Type</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td>page</td><td>number</td><td>Numéro de page (défaut: 1)</td></tr>
+                                <tr><td>limit</td><td>number</td><td>Éléments par page (défaut: 50, max: 100)</td></tr>
+                                <tr><td>status</td><td>string</td><td>Filtre par statut (PENDING, SUCCESS, FAILED)</td></tr>
+                                <tr><td>startDate</td><td>string</td><td>Date de début (ISO 8601)</td></tr>
+                                <tr><td>endDate</td><td>string</td><td>Date de fin (ISO 8601)</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Exemple de requête</h4>
+                        <pre><code>curl -X GET "http://localhost:5000/api/merchants/transactions?page=1&limit=10&status=SUCCESS" \
+  -H "X-API-Key: voaray_abc123..." \
+  -H "X-API-Secret: sec_789ghi..."</code></pre>
+
+                        <h4>Réponse succès (200)</h4>
+                        <pre><code>{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 150,
+    "pages": 15
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Régénérer clé API -->
+                <div class="card" id="regenerate">
+                    <div class="card-header">
+                        <h2>🔄 Régénérer clé API</h2>
+                        <p>Générer une nouvelle clé API</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="endpoint">
+                            <span class="endpoint-method method-post">POST</span>
+                            <span class="endpoint-url">/api/merchants/keys/:keyId/regenerate</span>
+                            <div class="endpoint-description">Régénère une clé API existante</div>
+                        </div>
+
+                        <h4>Exemple de requête</h4>
+                        <pre><code>curl -X POST http://localhost:5000/api/merchants/keys/api_key_123/regenerate \
+  -H "X-API-Key: voaray_abc123..." \
+  -H "X-API-Secret: sec_789ghi..."</code></pre>
+
+                        <h4>Réponse succès (200)</h4>
+                        <pre><code>{
+  "success": true,
+  "data": {
+    "key": "voaray_new_key_abc123...",
+    "secret": "new_secret_xyz789...",
+    "expiresAt": "2025-01-15T10:00:00Z"
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Codes d'erreur -->
+                <div class="card" id="errors">
+                    <div class="card-header">
+                        <h2>⚠️ Codes d'erreur</h2>
+                        <p>Liste des codes d'erreur possibles</p>
+                    </div>
+                    <div class="card-body">
+                        <table class="param-table">
+                            <thead><tr><th>Code</th><th>Description</th><th>HTTP Status</th></tr></thead>
+                            <tbody>
+                                <tr><td>MISSING_FIELDS</td><td>Champs requis manquants</td><td>400</td></tr>
+                                <tr><td>EMAIL_EXISTS</td><td>Email déjà enregistré</td><td>400</td></tr>
+                                <tr><td>INVALID_AMOUNT</td><td>Montant invalide</td><td>400</td></tr>
+                                <tr><td>INVALID_METHOD</td><td>Méthode de paiement invalide</td><td>400</td></tr>
+                                <tr><td>PARTNER_UNAVAILABLE</td><td>Partenaire non disponible</td><td>400</td></tr>
+                                <tr><td>ALREADY_PAID</td><td>Commande déjà payée</td><td>400</td></tr>
+                                <tr><td>SESSION_EXPIRED</td><td>Session de paiement expirée</td><td>400</td></tr>
+                                <tr><td>INVALID_STATUS</td><td>Statut invalide</td><td>400</td></tr>
+                                <tr><td>NOT_FOUND</td><td>Ressource non trouvée</td><td>404</td></tr>
+                                <tr><td>UNAUTHORIZED</td><td>Non authentifié</td><td>401</td></tr>
+                                <tr><td>RATE_LIMITED</td><td>Trop de requêtes</td><td>429</td></tr>
+                                <tr><td>SERVER_ERROR</td><td>Erreur serveur interne</td><td>500</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2026 Voaray Payment Gateway. Tous droits réservés.</p>
+        <p>Support: <a href="mailto:support@voaray.com">support@voaray.com</a></p>
+    </div>
+
+    <script>
+        // Remplacer l'URL de base avec l'environnement actuel
+        const baseUrl = window.location.origin;
+        document.getElementById('baseUrl').textContent = `${baseUrl}/api/merchants`;
+        
+        // Mettre à jour toutes les URLs dans les exemples
+        document.querySelectorAll('pre code').forEach(block => {
+            let text = block.textContent;
+            text = text.replace(/http:\/\/localhost:5000/g, baseUrl);
+            block.textContent = text;
+        });
+    </script>
+</body>
+</html>

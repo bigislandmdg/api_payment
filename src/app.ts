@@ -8,12 +8,15 @@ import path from 'path';
 import paymentRoutes from './routes/payment.routes';
 import webhookRoutes from './routes/webhook.routes';
 import adminRoutes from './routes/admin.routes';
+import merchantRoutes from './routes/merchant.routes';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import logger from './utils/logger';
 import prisma from './config/database';
+import { partnerService } from './services/partner.services'; 
 
 // Imports de types (type-only)
 import type { Application, Request, Response, NextFunction } from 'express';
+import refundRoutes from './routes/refund.routes';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -101,6 +104,17 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/payments', paymentRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/merchants', merchantRoutes); // ✅ Ajout des routes merchant
+/**
+ * @route   GET /docs/merchant-api
+ * @desc    Documentation de l'API marchand
+ * @access  Public
+ */
+app.get('/docs/merchant-api', (req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, '../public/docs/merchant-api.html'));
+});
+
+app.use('/api/refunds', refundRoutes);
 
 // ============================================
 // HEALTH CHECK
@@ -296,6 +310,7 @@ app.get('/', (req: Request, res: Response) => {
       payments: '/api/payments',
       webhooks: '/api/webhooks',
       admin: '/api/admin',
+      merchants: '/api/merchants', // ✅ Ajout des endpoints merchants
       payment_page: '/pay/:id'
     },
     documentation: 'https://docs.voaray.com'
@@ -315,7 +330,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ============================================
-// DÉMARRAGE DU SERVEUR
+// DÉMARRAGE DU SERVEUR AVEC INITIALISATION DES PARTENAIRES
 // ============================================
 
 const startServer = async () => {
@@ -323,12 +338,17 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info('📦 Database connected successfully');
     
+    // ✅ Initialiser les partenaires au démarrage
+    await partnerService.initializePartners();
+    logger.info('🤝 Partners service initialized');
+    
     app.listen(PORT, () => {
       logger.info(`🚀 Voaray API running on port ${PORT}`);
       logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🔗 Base URL: ${process.env.BASE_URL || `http://localhost:${PORT}`}`);
       logger.info(`💳 Payment URL: ${process.env.BASE_URL || `http://localhost:${PORT}`}/pay/{payment_id}`);
       logger.info(`🏥 Health check: ${process.env.BASE_URL || `http://localhost:${PORT}`}/health`);
+      logger.info(`👥 Merchants API: ${process.env.BASE_URL || `http://localhost:${PORT}`}/api/merchants`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

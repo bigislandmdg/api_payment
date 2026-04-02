@@ -4,8 +4,10 @@ import logger from '../config/logger';
 export interface PaymentResult {
   success: boolean;
   transaction_id?: string;
-  error?: string;
   reference?: string;
+  error?: string;
+  provider_response?: any;  // Rendre optionnel avec '?'
+  requires_confirmation?: boolean;
 }
 
 export const processMobileMoneyPayment = async (
@@ -20,12 +22,25 @@ export const processMobileMoneyPayment = async (
         return {
           success: true,
           transaction_id: `SIM_${Date.now()}_${payment.id}`,
-          reference: payment.reference
+          reference: payment.reference,
+          provider_response: {
+            status: 'SUCCESS',
+            message: 'Payment processed successfully',
+            transaction_id: `SIM_${Date.now()}_${payment.id}`,
+            reference: payment.reference,
+            timestamp: new Date().toISOString()
+          }
         };
       } else {
         return {
           success: false,
-          error: 'Insufficient balance'
+          error: 'Insufficient balance',
+          provider_response: {
+            status: 'FAILED',
+            error: 'INSUFFICIENT_FUNDS',
+            message: 'Insufficient balance',
+            timestamp: new Date().toISOString()
+          }
         };
       }
     }
@@ -40,7 +55,12 @@ export const processMobileMoneyPayment = async (
       default:
         return {
           success: false,
-          error: 'Unsupported payment method'
+          error: 'Unsupported payment method',
+          provider_response: {
+            error: 'Unsupported payment method',
+            method: payment.method,
+            timestamp: new Date().toISOString()
+          }
         };
     }
 
@@ -48,7 +68,11 @@ export const processMobileMoneyPayment = async (
     logger.error('Mobile money processing error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      provider_response: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      }
     };
   }
 };
@@ -81,18 +105,50 @@ const processMvolaPayment = async (payment: any, confirmationCode?: string): Pro
       return {
         success: true,
         transaction_id: response.data.transactionId || response.data.id,
-        reference: payment.reference
+        reference: payment.reference,
+        provider_response: {
+          status: response.data.status,
+          transaction_id: response.data.transactionId || response.data.id,
+          reference: payment.reference,
+          message: response.data.message,
+          timestamp: new Date().toISOString()
+        }
       };
     }
 
     return {
       success: false,
-      error: response.data.message || 'Payment failed'
+      error: response.data.message || 'Payment failed',
+      provider_response: {
+        status: response.data.status,
+        error: response.data.message || 'Payment failed',
+        transaction_id: response.data.transactionId,
+        timestamp: new Date().toISOString()
+      }
     };
 
   } catch (error) {
     logger.error('MVola payment error:', error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        success: false,
+        error: error.response.data?.message || 'MVola API error',
+        provider_response: {
+          error: error.response.data?.message || 'MVola API error',
+          status: error.response.status,
+          data: error.response.data,
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'MVola payment failed',
+      provider_response: {
+        error: error instanceof Error ? error.message : 'MVola payment failed',
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 };
 
@@ -120,12 +176,38 @@ const processOrangePayment = async (payment: any, confirmationCode?: string): Pr
     return {
       success: true,
       transaction_id: response.data.transaction_id,
-      reference: payment.reference
+      reference: payment.reference,
+      provider_response: {
+        status: response.data.status,
+        transaction_id: response.data.transaction_id,
+        reference: payment.reference,
+        message: response.data.message,
+        timestamp: new Date().toISOString()
+      }
     };
 
   } catch (error) {
     logger.error('Orange payment error:', error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        success: false,
+        error: error.response.data?.message || 'Orange API error',
+        provider_response: {
+          error: error.response.data?.message || 'Orange API error',
+          status: error.response.status,
+          data: error.response.data,
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Orange payment failed',
+      provider_response: {
+        error: error instanceof Error ? error.message : 'Orange payment failed',
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 };
 
@@ -154,12 +236,38 @@ const processAirtelPayment = async (payment: any, confirmationCode?: string): Pr
     return {
       success: true,
       transaction_id: response.data.transaction_id,
-      reference: payment.reference
+      reference: payment.reference,
+      provider_response: {
+        status: response.data.status,
+        transaction_id: response.data.transaction_id,
+        reference: payment.reference,
+        message: response.data.message,
+        timestamp: new Date().toISOString()
+      }
     };
 
   } catch (error) {
     logger.error('Airtel payment error:', error);
-    throw error;
+    if (axios.isAxiosError(error) && error.response) {
+      return {
+        success: false,
+        error: error.response.data?.message || 'Airtel API error',
+        provider_response: {
+          error: error.response.data?.message || 'Airtel API error',
+          status: error.response.status,
+          data: error.response.data,
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Airtel payment failed',
+      provider_response: {
+        error: error instanceof Error ? error.message : 'Airtel payment failed',
+        timestamp: new Date().toISOString()
+      }
+    };
   }
 };
 

@@ -49,6 +49,16 @@ export interface PaymentResponse {
   reference?: string;
   qr_code?: string;
   expires_in?: number;
+  fees?: {
+    total: number;
+    net: number;
+    breakdown: {
+      partnerPercentage: number;
+      partnerFee: number;
+      voarayFee: number;
+      fixedFee: number;
+    };
+  };
   error?: string;
   code?: string;
 }

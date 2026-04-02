@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { verifyJWT } from '../middleware/auth';
 import prisma from '../config/database';
 import logger from '../config/logger';
+import { PartnerStatus } from '@prisma/client'; // ✅ Importer l'enum
 
 const router = Router();
 
@@ -463,6 +464,191 @@ router.get('/audit', async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching audit logs:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      code: 'SERVER_ERROR'
+    });
+  }
+});
+
+// ============================================
+// ENDPOINT D'INITIALISATION DES PARTENAIRES
+// ============================================
+
+/**
+ * @route   POST /api/admin/init-partners
+ * @desc    Initialiser les partenaires par défaut (MVOLA, ORANGE, AIRTEL)
+ * @access  Admin
+ */
+router.post('/init-partners', async (req, res) => {
+  try {
+    // Vérifier si la table partnerConfig existe
+    try {
+      const count = await prisma.partnerConfig.count();
+      logger.info(`Found ${count} existing partners`);
+    } catch (error) {
+      logger.warn('PartnerConfig table may not exist yet, creating...');
+    }
+
+    const partners = [
+      {
+        name: 'MVOLA',
+        apiUrl: process.env.MVOLA_API_URL || 'https://api.mvola.mg',
+        clientId: process.env.MVOLA_CLIENT_ID || 'test_client_id',
+        clientSecret: process.env.MVOLA_CLIENT_SECRET || 'test_client_secret',
+        merchantId: process.env.MVOLA_MERCHANT_ID || 'test_merchant',
+        webhookSecret: process.env.MVOLA_WEBHOOK_SECRET,
+        feePercentage: 1.2,
+        feeFixed: 500,
+        status: PartnerStatus.ACTIVE // ✅ Utiliser l'enum
+      },
+      {
+        name: 'ORANGE',
+        apiUrl: process.env.ORANGE_API_URL || 'https://api.orange.mg',
+        clientId: process.env.ORANGE_CLIENT_ID || 'test_client_id',
+        clientSecret: process.env.ORANGE_CLIENT_SECRET || 'test_client_secret',
+        merchantId: process.env.ORANGE_MERCHANT_ID || 'test_merchant',
+        webhookSecret: process.env.ORANGE_WEBHOOK_SECRET,
+        feePercentage: 1.3,
+        feeFixed: 500,
+        status: PartnerStatus.ACTIVE // ✅ Utiliser l'enum
+      },
+      {
+        name: 'AIRTEL',
+        apiUrl: process.env.AIRTEL_API_URL || 'https://api.airtel.mg',
+        clientId: process.env.AIRTEL_CLIENT_ID || 'test_client_id',
+        clientSecret: process.env.AIRTEL_CLIENT_SECRET || 'test_client_secret',
+        merchantId: process.env.AIRTEL_MERCHANT_ID || 'test_merchant',
+        webhookSecret: process.env.AIRTEL_WEBHOOK_SECRET,
+        feePercentage: 1.4,
+        feeFixed: 500,
+        status: PartnerStatus.ACTIVE // ✅ Utiliser l'enum
+      }
+    ];
+
+    const results = [];
+    
+    for (const partner of partners) {
+      const result = await prisma.partnerConfig.upsert({
+        where: { name: partner.name },
+        update: {
+          apiUrl: partner.apiUrl,
+          clientId: partner.clientId,
+          clientSecret: partner.clientSecret,
+          merchantId: partner.merchantId,
+          webhookSecret: partner.webhookSecret,
+          feePercentage: partner.feePercentage,
+          feeFixed: partner.feeFixed,
+          status: partner.status, // ✅ Maintenant c'est l'enum
+          updatedAt: new Date()
+        },
+        create: {
+          name: partner.name,
+          apiUrl: partner.apiUrl,
+          clientId: partner.clientId,
+          clientSecret: partner.clientSecret,
+          merchantId: partner.merchantId,
+          webhookSecret: partner.webhookSecret,
+          feePercentage: partner.feePercentage,
+          feeFixed: partner.feeFixed,
+          status: partner.status // ✅ Maintenant c'est l'enum
+        }
+      });
+      
+      results.push({
+        name: result.name,
+        status: result.status,
+        feePercentage: result.feePercentage,
+        feeFixed: result.feeFixed,
+        apiUrl: result.apiUrl,
+        action: result.createdAt.getTime() === result.updatedAt.getTime() ? 'created' : 'updated'
+      });
+    }
+
+    logger.info('Partners initialized successfully', { results });
+    
+    res.json({
+      success: true,
+      message: 'Partners initialized successfully',
+      data: results
+    });
+    
+  } catch (error) {
+    logger.error('Error initializing partners:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to initialize partners',
+      code: 'INIT_ERROR',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/admin/partners
+ * @desc    Liste tous les partenaires configurés
+ * @access  Admin
+ */
+router.get('/partners', async (req, res) => {
+  try {
+    const partners = await prisma.partnerConfig.findMany({
+      orderBy: { name: 'asc' }
+    });
+
+    res.json({
+      success: true,
+      data: partners
+    });
+  } catch (error) {
+    logger.error('Error fetching partners:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      code: 'SERVER_ERROR'
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/admin/partners/:name/status
+ * @desc    Mettre à jour le statut d'un partenaire
+ * @access  Admin
+ * @params  name - Nom du partenaire (MVOLA, ORANGE, AIRTEL)
+ * @body    { status }
+ */
+router.put('/partners/:name/status', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['ACTIVE', 'MAINTENANCE', 'INACTIVE'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+        code: 'INVALID_STATUS'
+      });
+    }
+
+    // Convertir la chaîne en enum
+    const partnerStatus = status as PartnerStatus;
+
+    const updated = await prisma.partnerConfig.update({
+      where: { name: name.toUpperCase() },
+      data: { status: partnerStatus, updatedAt: new Date() } // ✅ Utiliser l'enum
+    });
+
+    res.json({
+      success: true,
+      data: {
+        name: updated.name,
+        status: updated.status,
+        updatedAt: updated.updatedAt
+      }
+    });
+  } catch (error) {
+    logger.error('Error updating partner status:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',

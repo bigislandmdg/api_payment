@@ -10,7 +10,7 @@ export class RefundController {
   /**
    * Créer un remboursement pour un paiement
    */
-  async createRefund(req: Request, res: Response) {
+  createRefund = async (req: Request, res: Response) => {
     try {
       const { payment_id, amount, reason, metadata } = req.body;
       
@@ -88,8 +88,8 @@ export class RefundController {
       
       logger.info(`Processing refund for payment ${payment_id}, amount: ${refundAmount}`);
       
-      // Traiter le remboursement auprès du provider - Utiliser bind pour garantir le contexte
-      const refundResult = await this.processRefundWithProvider.bind(this)(payment, transaction, refundAmount);
+      // Traiter le remboursement auprès du provider
+      const refundResult = await this.processRefundWithProvider(payment, transaction, refundAmount);
       
       if (refundResult.success) {
         // Utiliser une transaction Prisma pour la cohérence des données
@@ -163,7 +163,7 @@ export class RefundController {
         // Envoyer un webhook au marchand si configuré
         const merchantWebhookUrl = (payment.metadata as any)?.merchant_webhook_url;
         if (merchantWebhookUrl && webhookService) {
-          const signature = this.generateRefundSignature.bind(this)(result.refund, payment);
+          const signature = this.generateRefundSignature(result.refund, payment);
           await webhookService.sendWithRetry(
             merchantWebhookUrl,
             {
@@ -235,12 +235,12 @@ export class RefundController {
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
-  }
+  };
   
   /**
    * Récupérer le statut d'un remboursement
    */
-  async getRefundStatus(req: Request, res: Response) {
+  getRefundStatus = async (req: Request, res: Response) => {
     try {
       const { refund_id } = req.params;
       
@@ -298,12 +298,12 @@ export class RefundController {
         code: 'SERVER_ERROR'
       });
     }
-  }
+  };
   
   /**
    * Récupérer tous les remboursements d'un paiement
    */
-  async getPaymentRefunds(req: Request, res: Response) {
+  getPaymentRefunds = async (req: Request, res: Response) => {
     try {
       const { payment_id } = req.params;
       const { page = 1, limit = 50 } = req.query;
@@ -349,12 +349,12 @@ export class RefundController {
         code: 'SERVER_ERROR'
       });
     }
-  }
+  };
   
   /**
    * Traiter le remboursement avec le provider (MVola, Orange, Airtel)
    */
-  private async processRefundWithProvider(
+  private processRefundWithProvider = async (
     payment: any, 
     transaction: any, 
     amount: number
@@ -363,7 +363,7 @@ export class RefundController {
     providerRef?: string;
     error?: string;
     provider_response?: any;
-  }> {
+  }> => {
     try {
       // Simulation pour le développement
       if (process.env.NODE_ENV === 'development') {
@@ -397,11 +397,11 @@ export class RefundController {
       // Production - Appeler l'API du provider selon la méthode de paiement
       switch (payment.method) {
         case 'MVOLA':
-          return await this.processMvolaRefund.bind(this)(payment, transaction, amount);
+          return await this.processMvolaRefund(payment, transaction, amount);
         case 'ORANGE':
-          return await this.processOrangeRefund.bind(this)(payment, transaction, amount);
+          return await this.processOrangeRefund(payment, transaction, amount);
         case 'AIRTEL':
-          return await this.processAirtelRefund.bind(this)(payment, transaction, amount);
+          return await this.processAirtelRefund(payment, transaction, amount);
         default:
           return {
             success: false,
@@ -417,12 +417,12 @@ export class RefundController {
         provider_response: { error: error instanceof Error ? error.message : 'Unknown error' }
       };
     }
-  }
+  };
   
   /**
    * Traiter un remboursement MVola
    */
-  private async processMvolaRefund(payment: any, transaction: any, amount: number): Promise<any> {
+  private processMvolaRefund = async (payment: any, transaction: any, amount: number): Promise<any> => {
     // Implémentation MVola
     // TODO: Intégrer l'API MVola pour les remboursements
     return {
@@ -430,12 +430,12 @@ export class RefundController {
       providerRef: `MVOLA_REF_${Date.now()}`,
       provider_response: { status: 'PENDING', message: 'Refund initiated' }
     };
-  }
+  };
   
   /**
    * Traiter un remboursement Orange Money
    */
-  private async processOrangeRefund(payment: any, transaction: any, amount: number): Promise<any> {
+  private processOrangeRefund = async (payment: any, transaction: any, amount: number): Promise<any> => {
     // Implémentation Orange Money
     // TODO: Intégrer l'API Orange Money pour les remboursements
     return {
@@ -443,12 +443,12 @@ export class RefundController {
       providerRef: `ORANGE_REF_${Date.now()}`,
       provider_response: { status: 'PENDING', message: 'Refund initiated' }
     };
-  }
+  };
   
   /**
    * Traiter un remboursement Airtel Money
    */
-  private async processAirtelRefund(payment: any, transaction: any, amount: number): Promise<any> {
+  private processAirtelRefund = async (payment: any, transaction: any, amount: number): Promise<any> => {
     // Implémentation Airtel Money
     // TODO: Intégrer l'API Airtel Money pour les remboursements
     return {
@@ -456,12 +456,12 @@ export class RefundController {
       providerRef: `AIRTEL_REF_${Date.now()}`,
       provider_response: { status: 'PENDING', message: 'Refund initiated' }
     };
-  }
+  };
   
   /**
    * Générer une signature HMAC pour le webhook de remboursement
    */
-  private generateRefundSignature(refund: any, payment: any): string {
+  private generateRefundSignature = (refund: any, payment: any): string => {
     const payload = {
       refund_id: refund.id,
       payment_id: payment.id,
@@ -475,7 +475,7 @@ export class RefundController {
       .createHmac('sha256', process.env.WEBHOOK_SECRET || 'default-secret')
       .update(JSON.stringify(payload))
       .digest('hex');
-  }
+  };
 }
 
 export const refundController = new RefundController();

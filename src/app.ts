@@ -17,6 +17,7 @@ import { partnerService } from './services/partner.services';
 // Imports de types (type-only)
 import type { Application, Request, Response, NextFunction } from 'express';
 import refundRoutes from './routes/refund.routes';
+import reportRoutes from './routes/report.routes';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -113,6 +114,8 @@ app.use('/api/merchants', merchantRoutes); // ✅ Ajout des routes merchant
 app.get('/docs/merchant-api', (req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, '../public/docs/merchant-api.html'));
 });
+
+app.use('/api/reports', reportRoutes);
 
 app.use('/api/refunds', refundRoutes);
 
